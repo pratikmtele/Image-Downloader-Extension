@@ -1,0 +1,22 @@
+{
+  "name": "image-downloader-extension",
+  "version": "1.0.0",
+  "description": "A Chrome extension for downloading images from web pages",
+  "scripts": {
+    "build": "echo 'No build process needed for this extension'",
+    "test": "echo 'No tests configured yet'",
+    "dev": "echo 'Load the extension in Chrome developer mode'"
+  },
+  "devDependencies": {},
+  "keywords": [
+    "chrome-extension",
+    "image-downloader",
+    "browser-extension"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/image-downloader-extension.git"
+  }
+}

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Downloader Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 2px solid #28a745;
+            border-radius: 8px;
+        }
+        .test-image {
+            max-width: 300px;
+            height: 200px;
+            object-fit: cover;
+            border: 2px solid #ddd;
+            margin: 10px;
+            cursor: grab;
+        }
+        .test-image:active {
+            cursor: grabbing;
+        }
+        .instructions {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            background: #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <h1>🖼️ Image Downloader Extension Test</h1>
+    
+    <div class="status" id="status">
+        Loading extension status...
+    </div>
+
+    <div class="test-section">
+        <h2>🖱️ Test 1: Right-Click Context Menu</h2>
+        <div class="instructions">
+            <strong>Instructions:</strong> Right-click on the image below and look for "Download with Image Downloader" option.
+        </div>
+        <img src="https://via.placeholder.com/300x200/28a745/ffffff?text=Right-Click+Test" 
+             alt="Context Menu Test Image" 
+             class="test-image">
+    </div>
+
+    <div class="test-section">
+        <h2>🎯 Test 2: Drag & Drop</h2>
+        <div class="instructions">
+            <strong>Instructions:</strong> Click and drag the image below. A floating drop zone should appear.
+        </div>
+        <img src="https://via.placeholder.com/300x200/007bff/ffffff?text=Drag+Test" 
+             alt="Drag Test Image" 
+             class="test-image" 
+             draggable="true">
+    </div>
+
+    <div class="test-section">
+        <h2>🌐 Test 3: Real Images</h2>
+        <div class="instructions">
+            <strong>Instructions:</strong> Test with actual web images (JPG/PNG format).
+        </div>
+        <img src="https://picsum.photos/300/200?random=1" 
+             alt="Random Test Image 1" 
+             class="test-image">
+        <img src="https://picsum.photos/300/200?random=2" 
+             alt="Random Test Image 2" 
+             class="test-image">
+    </div>
+
+    <div class="test-section">
+        <h2>🔧 Troubleshooting</h2>
+        <ol>
+            <li><strong>Extension not loaded:</strong> Go to <code>chrome://extensions/</code> and make sure the extension is enabled</li>
+            <li><strong>Context menu missing:</strong> Reload the extension and refresh this page</li>
+            <li><strong>Drag error:</strong> Check browser console (F12) for error messages</li>
+            <li><strong>Downloads not working:</strong> Check if downloads permission is granted</li>
+        </ol>
+        
+        <button onclick="testExtension()">🧪 Test Extension Connection</button>
+        <button onclick="openExtensionsPage()">⚙️ Open Extensions Page</button>
+    </div>
+
+    <script>
+        // Test extension connectivity
+        function testExtension() {
+            const statusEl = document.getElementById('status');
+            
+            if (typeof chrome !== 'undefined' && chrome.runtime) {
+                try {
+                    chrome.runtime.sendMessage({action: 'ping'}, (response) => {
+                        if (chrome.runtime.lastError) {
+                            statusEl.innerHTML = `❌ Extension Error: ${chrome.runtime.lastError.message}`;
+                            statusEl.style.background = '#f8d7da';
+                        } else if (response && response.success) {
+                            statusEl.innerHTML = `✅ Extension is working! Message: ${response.message}`;
+                            statusEl.style.background = '#d4edda';
+                        } else {
+                            statusEl.innerHTML = `⚠️ Extension responded but with no success flag`;
+                            statusEl.style.background = '#fff3cd';
+                        }
+                    });
+                } catch (error) {
+                    statusEl.innerHTML = `❌ JavaScript Error: ${error.message}`;
+                    statusEl.style.background = '#f8d7da';
+                }
+            } else {
+                statusEl.innerHTML = `❌ Chrome extension APIs not available`;
+                statusEl.style.background = '#f8d7da';
+            }
+        }
+
+        function openExtensionsPage() {
+            window.open('chrome://extensions/', '_blank');
+        }
+
+        // Auto-test on page load
+        setTimeout(testExtension, 1000);
+
+        // Add drag event listeners for debugging
+        document.querySelectorAll('.test-image').forEach(img => {
+            img.addEventListener('dragstart', (e) => {
+                console.log('Drag started on:', e.target.alt);
+            });
+            
+            img.addEventListener('dragend', (e) => {
+                console.log('Drag ended on:', e.target.alt);
+            });
+        });
+    </script>
+</body>
+</html>
