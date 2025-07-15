@@ -13,8 +13,7 @@
     "image-downloader",
     "browser-extension"
   ],
-  "author": "Your Name",
-  "license": "MIT",
+  "author": "Pratik Tele",
   "repository": {
     "type": "git",
     "url": "https://github.com/yourusername/image-downloader-extension.git"

@@ -72,7 +72,6 @@ If downloads don't start:
 2. **File Location**
    - Downloads are saved to your default Downloads folder
    - Look for a subfolder called "Image_Downloader"
-   - Check Chrome's download history (`Ctrl+Shift+J`)
 
 ## 📁 Project Structure
 
@@ -104,7 +103,7 @@ Image_Downloader/
 ### Local Setup
 ```bash
 # Clone & Navigate
-git clone <repository>
+git clone https://github.com/pratikmtele/Image-Downloader-Extension.git
 cd Image_Downloader
 
 # Load in Chrome
