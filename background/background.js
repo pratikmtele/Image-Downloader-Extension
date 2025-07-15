@@ -4,17 +4,23 @@ class ImageDownloaderBackground {
     }
 
     init() {
-        chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+        chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {            
             if (request.action === 'downloadImages') {
                 this.handleDownloadImages(request.images)
-                    .then(() => sendResponse({ success: true }))
+                    .then(() => {
+                        sendResponse({ success: true });
+                    })
                     .catch(error => {
                         console.error('Download error:', error);
                         sendResponse({ success: false, error: error.message });
                     });
-                return true;
+                return true; 
             } else if (request.action === 'ping') {
                 sendResponse({ success: true, message: 'Extension is working' });
+                return true;
+            } else {
+                console.warn('Unknown action received:', request.action);
+                sendResponse({ success: false, error: 'Unknown action' });
                 return true;
             }
         });
@@ -25,7 +31,6 @@ class ImageDownloaderBackground {
         });
 
         chrome.runtime.onStartup.addListener(() => {
-            console.log('Extension startup, creating context menu');
             this.createContextMenu();
         });
 
@@ -86,8 +91,13 @@ class ImageDownloaderBackground {
                 status: status,
                 message: message,
                 url: url
+            }, (response) => {
+                if (chrome.runtime.lastError) {
+                    console.log('Popup not open, status not sent:', chrome.runtime.lastError.message);
+                }
             });
         } catch (error) {
+            console.error('Error sending status to popup:', error);
         }
     }
 
@@ -107,6 +117,7 @@ class ImageDownloaderBackground {
             const trimmedDownloads = recentDownloads.slice(0, 10);
             
             await chrome.storage.local.set({ recentDownloads: trimmedDownloads });
+            console.log('Recent download stored:', filename);
         } catch (error) {
             console.error('Error storing recent download:', error);
         }
@@ -117,12 +128,16 @@ class ImageDownloaderBackground {
             throw new Error('No images provided');
         }
 
+        console.log(`Starting download of ${images.length} image(s)`);
+        
         for (let i = 0; i < images.length; i++) {
             const image = images[i];
             try {
                 await this.downloadImage(image, i + 1, images.length);
             } catch (error) {
-                console.error(`Error downloading image ${i + 1}:`, error);
+                console.error(`Download failed for image ${i + 1}:`, error);
+                this.sendStatusToPopup('error', `Download failed for image ${i + 1}`, image.src);
+                throw error; // Re-throw to properly handle in the calling function
             }
         }
     }
@@ -132,6 +147,8 @@ class ImageDownloaderBackground {
             const cleanedUrl = this.cleanImageUrl(image.src);
             const filename = this.generateFilename(cleanedUrl, index);
             
+            console.log(`Downloading image ${index}/${total}:`, filename);
+            
             const downloadId = await chrome.downloads.download({
                 url: cleanedUrl,
                 filename: `Image_Downloader/${filename}`,
@@ -139,10 +156,12 @@ class ImageDownloaderBackground {
             });
 
             await this.storeRecentDownload(cleanedUrl);
+            console.log(`Download initiated with ID: ${downloadId}`);
             return downloadId;
 
         } catch (error) {
-            throw error;
+            console.error('Download image error:', error);
+            throw error; // Re-throw to handle properly in calling function
         }
     }
 
@@ -177,7 +196,6 @@ class ImageDownloaderBackground {
                 return urlObj.origin + urlObj.pathname + (cleanedSearch ? '?' + cleanedSearch : '');
             }
         } catch (error) {
-            console.warn('Error cleaning URL, using original:', error);
             return url;
         }
     }
@@ -197,7 +215,6 @@ class ImageDownloaderBackground {
             return `${basename}_${index}_${timestamp}.${extension}`;
 
         } catch (error) {
-            console.error('Error generating filename:', error);
             return `image_${index}_${Date.now()}.jpg`;
         }
     }
@@ -216,4 +233,17 @@ class ImageDownloaderBackground {
     }
 }
 
-new ImageDownloaderBackground();
+// Initialize the background script
+console.log('Background script starting...');
+const backgroundInstance = new ImageDownloaderBackground();
+console.log('Background script initialized successfully');
+
+// Add a global error handler for unhandled promise rejections
+self.addEventListener('unhandledrejection', (event) => {
+    console.error('Unhandled promise rejection in background script:', event.reason);
+});
+
+// Ensure the service worker stays active for messaging
+self.addEventListener('message', (event) => {
+    console.log('Background script received message event:', event);
+});

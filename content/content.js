@@ -275,22 +275,43 @@ class ImageDownloaderContent {
                 return;
             }
             
+            // Add a timeout for the message
+            const messageTimeout = setTimeout(() => {
+                reject(new Error('Message timeout - background script not responding'));
+            }, 5000);
+            
             try {
                 chrome.runtime.sendMessage({
                     action: 'downloadImages',
                     images: [imageData]
                 }, (response) => {
+                    clearTimeout(messageTimeout);
+                    
+                    // Check if the extension context was invalidated during the message
                     if (chrome.runtime.lastError) {
-                        reject(new Error(`Runtime error: ${chrome.runtime.lastError.message}`));
-                    } else if (!response) {
-                        reject(new Error('No response from background script'));
-                    } else if (!response.success) {
-                        reject(new Error(response.error || 'Download failed'));
-                    } else {
-                        resolve();
+                        const error = chrome.runtime.lastError.message;
+                        if (error.includes('receiving end does not exist') || error.includes('Extension context invalidated')) {
+                            reject(new Error('Extension context lost - please reload the extension and refresh this page'));
+                        } else {
+                            reject(new Error(`Runtime error: ${error}`));
+                        }
+                        return;
                     }
+                    
+                    if (!response) {
+                        reject(new Error('No response from background script - extension may need to be reloaded'));
+                        return;
+                    }
+                    
+                    if (!response.success) {
+                        reject(new Error(response.error || 'Download failed'));
+                        return;
+                    }
+                    
+                    resolve();
                 });
             } catch (error) {
+                clearTimeout(messageTimeout);
                 reject(new Error(`Message sending failed: ${error.message}`));
             }
         });
@@ -314,7 +335,6 @@ function initializeExtension() {
             new ImageDownloaderContent();
         }
     } catch (error) {
-        // Extension context not available, skip initialization
     }
 }
 
